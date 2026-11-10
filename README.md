@@ -2,109 +2,102 @@
 
 **Gate-fused multi-source context before mutate; dual-memory commit after evaluate.**
 
-`dsh-evolve-fusion` is a standalone Cordis companion plugin for [`dsh-evolve-loop`](https://github.com/) / Organon. It does **not** modify upstream evolve-loop sources. It registers:
+npm 包名：`dsh-evolve-fusion`  
+仓库：https://github.com/ddddwrrert/Fusion
 
-| Slot | Provider | Role |
-|------|----------|------|
-| `loop` | `fusion-loop` | `select → fuse(K_t) → mutate\|K_t → evaluate → commit → survive` |
-| `mutate` | `fusion-mutate` | Injects fused `K_t` into the worker instruction |
+---
 
-`evaluate` / `select` / `survive` stay upstream (official sealed \(V\) untouched).
+## 从另一台电脑拉下来能直接跑吗？
 
-## Loop
-
-```text
-select(parent)
-  → fuse: Evidence[] → gate → K_t     # NEW
-  → mutate(parent, K_t)
-  → evaluate                          # sealed official V
-  → population.append
-  → commit: Working + optional Chain  # NEW
-  → survive
-```
-
-### Fuse (before mutate)
-
-Collects evidence from:
-
-- parent fitness / deficit vs best
-- sibling true diffs (higher-fitness peers)
-- Working (last attempt outcome)
-- Chain (recent accepted true diffs)
-
-Then **late-gates** into a character-bounded `K_t` prompt block.
-
-### Commit (after evaluate)
-
-- **Working** (`run/fuse/working.json`): overwritten every step
-- **Chain** (`run/fuse/chain.jsonl`): append-only **true unified diff** only when `fitness > parent_fitness` (zero LLM)
-
-## What runs after `git clone` on another machine?
-
-| Goal | Clone-and-run? | Need the same extras |
-|------|----------------|----------------------|
-| Unit tests + mock loop | **Yes** | **Node.js ≥ 22**, `npm` |
-| Real Organon / DSH evolve with LLM workers | **No (not this repo alone)** | Same stack as any `dsh-evolve-loop` run (below) |
-
-This repo is a **companion plugin**. Offline smoke proves Fusion’s fuse/commit logic. It does **not** ship DeepSeek Harness, `dsh-evolve-loop`, a task evaluator, or model API keys.
-
-### A. Offline (any PC with Node 22+)
+**能。** 不需要 DSH / Organon / LLM，只要 Node ≥ 22：
 
 ```bash
 git clone https://github.com/ddddwrrert/Fusion.git
 cd Fusion
 npm install
 npm test
-npm run example:mock
+npm start
 ```
 
-Expected: 13 tests pass; mock prints `[result]`, `[working]`, `[chain lines]`.  
-No DSH, no GPU, no API key.
+`npm start` = 独立 runner：`select → fuse → mutate → evaluate → commit → survive`，账本写在 `./run/fuse/`。
 
-### B. Real DSH / Organon evolve (same prerequisites as Organon)
+| 目标 | 命令 | 依赖 |
+|------|------|------|
+| 单测 | `npm test` | 仅本仓 + vitest |
+| 端到端离线环 | `npm start` | 仅本仓（自带 baseline + standalone harness） |
+| 对照原版环 | `npm start -- --mode baseline` | 仅本仓（`src/baseline/*` 是原框架同构拷贝） |
+| 挂进真 DSH / 官方 V | 见下文「作为 DSH 插件」 | 需要本机已有 `dsh-evolve-loop` |
 
-You need **the same environment you already use for evolve**, plus this plugin:
+> **注意：** 官方 AHC / 密封 judge **不在本仓**。`npm start` 用 demo 任务的 `score_hint` 假分，只验证 Fusion 环与账本。真题评测要接 Organon 的 `evaluate`。
 
-1. **Node.js ≥ 22**
-2. **DeepSeek Harness (`dsh`)** installed and a working profile (e.g. `web` / `headless`)
-3. **`dsh-evolve-loop`** loaded in that profile (provides `evolve`)
-4. A **task directory** with `task.json` + `evaluator/` + `#EVOLVE_START`…`#EVOLVE_END` solution (same as Organon)
-5. **LLM credentials** for worker `spawnWorker` (same provider keys you use for mutate)
-6. This plugin installed into the profile, then:
+---
+
+## 新循环（Fusion）
+
+```text
+select(parent)
+  → fuse: Evidence[] → gate → K_t     # 本仓新增
+  → mutate(parent, K_t)
+  → evaluate                          # standalone 假分 / DSH 下官方 V
+  → population.append
+  → commit: Working + optional Chain  # 本仓新增
+  → survive
+```
+
+---
+
+## 与原框架同构的代码（已写进本仓）
+
+不 import 上游源码；下列文件是 Organon `dsh-evolve-loop` 默认行为的**仓内拷贝/等价实现**，保证离线可跑、可对照：
+
+| 本仓路径 | 对应原框架 | 作用 |
+|----------|------------|------|
+| `src/baseline/loop.js` | `providers/loop.js` | 原版五槽环：`select→mutate→evaluate→survive` |
+| `src/baseline/mutate.js` | `providers/mutate.js` | 原版 candidate-builder（allocate + spawnWorker） |
+| `src/baseline/select.js` | 默认选父 | 按 merit 选最优存活个体 |
+| `src/baseline/survive.js` | 默认裁员 | top-k by merit |
+| `src/baseline/population.js` | `population.js` | `alive` / `merit` |
+| `src/standalone/harness.js` | evolve 服务子集 | 无 DSH 时提供 `allocate/evaluate/spawnWorker/...` |
+
+Fusion 自己的新增在：
+
+- `src/providers/fuse-loop.js` / `fuse-mutate.js`
+- `src/fuse/*`（evidence / gate / working / chain / commit）
+
+---
+
+## 作为 DSH 插件（可选）
+
+本机已安装 DeepSeek Harness + `dsh-evolve-loop` 时：
 
 ```bash
-# from the Fusion checkout
-dsh plugin --profile web add ./
-
+dsh plugin --profile web add /path/to/Fusion
 export DSH_EVOLVE_FUSION=1
-# then run evolve as usual (evolve_run / your Organon task workflow)
 ```
 
-Unset / omit `DSH_EVOLVE_FUSION` → upstream five-slot baseline (A/B).
+只注册 `loop=fusion-loop`、`mutate=fusion-mutate`；**不改**上游 `evaluate`。关掉 env 即回原版五槽。
 
-**Not included / not auto-installed:** Cordis, `dsh-tools`, `dsh-evolve-loop` (listed as optional peers so `npm install` works offline).
+---
 
 ## Layout
 
 ```text
+bin/fusion-run.js          # clone 后直接跑
+tasks/demo/                # 离线 demo 题
 src/
-  index.js / install.js          # Cordis opt-in
-  providers/fuse-loop.js         # new loop
-  providers/fuse-mutate.js       # K_t → worker
-  fuse/
-    evidence.js  gate.js  fuse.js
-    working.js   chain.js  commit.js
-    diff.js      paths.js
-tests/                           # vitest
-examples/mock-evolve-run.js
+  baseline/                # 原框架同构拷贝
+  standalone/harness.js    # 无 DSH evolve 服务
+  providers/fuse-*.js      # Fusion 环
+  fuse/                    # 融合 + commit 账本
+tests/
 ```
 
 ## Invariants
 
-1. Fusion text enters **worker instructions only**, never fitness.
-2. Chain patches are disk diffs, never LLM summaries.
-3. Commit / fuse failures must not abort the search loop.
-4. Upstream `evaluate` remains the only official score path.
+1. 融合文本只进 worker instruction，不进 fitness  
+2. Chain 只存磁盘真 diff，不用 LLM 摘要  
+3. fuse/commit 失败不得打断主环  
+4. DSH 模式下官方 `evaluate` 仍是唯一真分  
 
 ## License
 

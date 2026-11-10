@@ -1,20 +1,4 @@
 /**
- * Tiny population helpers (mirrors Organon semantics; local copy, no upstream import).
+ * Re-export baseline population helpers (Organon-equivalent, vendored in-repo).
  */
-
-/**
- * @param {unknown} fitness
- * @returns {number}
- */
-export function merit(fitness) {
-  if (typeof fitness !== 'number' || !Number.isFinite(fitness)) return Number.NEGATIVE_INFINITY
-  return fitness
-}
-
-/**
- * @param {Array<{ survival?: string }>} rows
- * @returns {Array<object>}
- */
-export function alive(rows) {
-  return (rows ?? []).filter(row => row && row.survival !== 'no')
-}
+export { alive, merit } from '../baseline/population.js'
