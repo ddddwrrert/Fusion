@@ -1,7 +1,7 @@
 {
   "name": "dsh-evolve-fusion",
   "version": "0.1.0",
-  "description": "Fusion: gate-fused multi-source context before mutate; dual memory commit after evaluate. Companion plugin for dsh-evolve-loop (does not modify upstream).",
+  "description": "Fusion: gate-fused multi-source context before mutate; dual-memory commit after evaluate. DSH companion for dsh-evolve-loop — runtime-depends on evolve; forks loop/mutate/population with documented DIFF (docs/UPSTREAM.md).",
   "license": "MIT",
   "type": "module",
   "main": "./src/index.js",
@@ -10,17 +10,11 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "bin",
     "src",
-    "tasks",
-    "examples",
     "cordis.patch.yml",
     "README.md",
     "LICENSE"
   ],
-  "bin": {
-    "fusion-run": "./bin/fusion-run.js"
-  },
   "dsh": {
     "bundle": {
       "patch": [
@@ -29,13 +23,10 @@
     }
   },
   "scripts": {
-    "start": "node bin/fusion-run.js --clean",
-    "start:baseline": "node bin/fusion-run.js --mode baseline --clean",
     "test": "vitest run",
     "test:watch": "vitest",
     "example:mock": "node examples/mock-evolve-run.js"
   },
-
   "peerDependencies": {
     "@deepseek-ai/cordis": "~4.0.4",
     "@deepseek-ai/dsh-tools": ">=0.1.7-rc.1 <0.2.0",

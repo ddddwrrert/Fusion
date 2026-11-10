@@ -1,5 +1,11 @@
 /**
  * Install Fusion providers onto an existing evolve service.
+ *
+ * Pattern matches Organon companions:
+ *   - dsh-evolve-loop/src/a2/install.js
+ *   - dsh-selexis/src/install.js
+ * Uses live `evolve.register` from dsh-evolve-loop (DSH runtime dependency).
+ * @see docs/UPSTREAM.md §1, §2.4
  */
 
 import fuseLoop from './providers/fuse-loop.js'

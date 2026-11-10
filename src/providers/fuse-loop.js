@@ -1,5 +1,19 @@
 /**
- * Fusion loop: select → fuse(K_t) → mutate|K_t → evaluate → record → commit → survive.
+ * Fusion loop.
+ *
+ * FORK OF: Organon `dsh-evolve-loop/src/providers/loop.js` (`export const name = 'evolve-loop'`).
+ * @see docs/UPSTREAM.md §2.2
+ *
+ * SAME AS UPSTREAM:
+ *   baseline copyTask+evaluate; select→mutate→evaluate→append→survive; best by merit.
+ *
+ * DIFF FROM UPSTREAM (only):
+ *   1) after select → fuse() → K_t
+ *   2) mutate({ ..., fuseKt: K_t })
+ *   3) after append → commit() (Working + Chain)
+ *
+ * Runtime DSH deps (not reimplemented): evolve.context / population / copyTask /
+ * select / mutate / evaluate / survive / currentRun — from `dsh-evolve-loop`.
  */
 
 import { alive, merit } from '../lib/population.js'
@@ -10,10 +24,11 @@ export const name = 'fusion-loop'
 
 /**
  * @param {object} args
- * @param {object} evolve
+ * @param {object} evolve - live evolve service from dsh-evolve-loop
  * @returns {Promise<{ best_id: string, best_fitness: number, remaining: number }>}
  */
 export async function run(args, evolve) {
+  // --- same skeleton as upstream loop.js ---
   const { maxPopulation, candidates } = await evolve.context()
   const population = evolve.population()
   const runState = evolve.currentRun()
@@ -42,12 +57,11 @@ export async function run(args, evolve) {
     const parentRow = rows.find(r => r.id === parentId)
     const parentFitness = typeof parentRow?.fitness === 'number' ? parentRow.fitness : undefined
 
-    // --- inserted: fuse ---
+    // --- DIFF: fuse before mutate ---
     let kt = { text: '', evidence_ids: [], truncated: false, max_chars: 0 }
     try {
       kt = await fuse(evolve, { parentId, rows })
     } catch (err) {
-      // Fusion failure must not stop the run; degrade to empty K_t.
       kt = {
         text: `[FUSED CONTEXT unavailable: ${String(err?.message ?? err)}]`,
         evidence_ids: [],
@@ -60,7 +74,7 @@ export async function run(args, evolve) {
     const candidate = await evolve.mutate({
       parent: parentId,
       parentFitness,
-      fuseKt: kt,
+      fuseKt: kt, // DIFF: pass K_t into fusion-mutate
     })
     created += 1
 
@@ -73,7 +87,7 @@ export async function run(args, evolve) {
       survival: 'yes',
     })
 
-    // --- inserted: commit ---
+    // --- DIFF: commit after record ---
     try {
       await commit(evolve, {
         parent: parentId,

@@ -1,21 +1,40 @@
 /**
- * Fusion mutate: injects K_t into the worker instruction.
- * Uses evolve.allocate + evolve.spawnWorker only (no upstream source imports).
+ * Fusion mutate.
+ *
+ * FORK OF: Organon `dsh-evolve-loop/src/providers/mutate.js` (`candidate-builder`).
+ * @see docs/UPSTREAM.md §2.3
+ *
+ * SAME AS UPSTREAM:
+ *   defaultPersona; resolve parentFitness; allocate + spawnWorker; abort rethrow;
+ *   EVOLVE markers; do not run official evaluator.
+ *
+ * DIFF FROM UPSTREAM (only):
+ *   buildInstruction(..., kt) appends fused K_t.text;
+ *   options.fuseKt / options.kt;
+ *   candidate.fusion metadata.
+ *
+ * Runtime DSH deps: evolve.allocate / evolve.spawnWorker / evolve.population
+ * (from `dsh-evolve-loop` + DSH subagents).
  */
 
 export const name = 'fusion-mutate'
 
-/** @returns {string} */
+/**
+ * Same text as upstream `defaultPersona()` in mutate.js.
+ * @returns {string}
+ */
 export function defaultPersona() {
   return 'You are a solution worker in an evolutionary search. Design and implement one complete candidate in your assigned directory. IMPLEMENT A SINGLE SOLUTION. DO NOT ATTEMPT MULTIPLE SOLUTIONS.'
 }
 
 /**
+ * Upstream `defaultInstruction(parentFitness)` plus optional fused K_t block.
  * @param {number} [parentFitness]
  * @param {object} [kt]
  * @returns {string}
  */
 export function buildInstruction(parentFitness, kt) {
+  // --- same lines as upstream defaultInstruction ---
   const lines = [
     'Read the task statement and the parent solution in this directory.',
   ]
@@ -27,10 +46,11 @@ export function buildInstruction(parentFitness, kt) {
   lines.push(
     'Understand how the current solution works, consider how it could better satisfy the task, and implement your chosen improvement as one complete candidate.',
     'Edit only the solution code between the #EVOLVE_START and #EVOLVE_END markers; leave all other task files and code unchanged.',
-    'This directory is one allocated candidate and one complete solution attempt. You may reason about alternatives, but do not write, run, or compare several complete implementations here.',
+    'This directory is one allocated candidate and one complete solution attempt. You may reason about alternatives, but do not write, run, or compare several complete implementations here. A different complete attempt requires another candidate and uses another budget unit.',
     'Do not run the task\'s official evaluator or performance benchmarks; the search loop evaluates your candidate after you finish.',
   )
 
+  // --- DIFF: append fused context ---
   if (kt?.text) {
     lines.push('', String(kt.text).trim())
   }
@@ -38,9 +58,14 @@ export function buildInstruction(parentFitness, kt) {
   return lines.join('\n')
 }
 
+/** Alias kept for readers comparing to upstream `defaultInstruction`. */
+export function defaultInstruction(parentFitness) {
+  return buildInstruction(parentFitness, null)
+}
+
 /**
  * @param {object} options
- * @param {object} evolve
+ * @param {object} evolve - live evolve service from dsh-evolve-loop
  * @returns {Promise<{ id: string, dir: string, fusion?: object }>}
  */
 export async function mutate(options, evolve) {
@@ -87,10 +112,12 @@ export async function mutate(options, evolve) {
       ...extra,
     })
   } catch (error) {
+    // Same as upstream: abort rethrows; other worker failures still evaluate.
     const currentRun = evolve.currentRun?.()
     if (currentRun?.signal?.aborted) throw error
   }
 
+  // DIFF: audit stamp for fusion
   candidate.fusion = {
     parentFitness,
     evidence_ids: fused?.evidence_ids ?? [],
@@ -100,4 +127,4 @@ export async function mutate(options, evolve) {
   return candidate
 }
 
-export default { name, mutate, buildInstruction, defaultPersona }
+export default { name, mutate, buildInstruction, defaultInstruction, defaultPersona }
