@@ -1,23 +1,40 @@
-# Vendored upstream-identical code
+# Vendored upstream-identical code (Organon `dsh-evolve-loop`)
 
-These files are copied from Organon `plugins/dsh-evolve-loop` so Fusion can be read and reviewed as a full five-slot stack. Behavior matches the upstream defaults unless noted.
+These files are **written out** from Organon so Fusion can be reviewed as a full
+five-slot stack and can depend on **DSH** at runtime. Behavior matches upstream
+defaults unless noted.
 
-| Fusion path | Upstream source | Role |
-|-------------|-----------------|------|
-| `src/lib/population.js` | `dsh-evolve-loop/src/population.js` | `alive` / `merit` / population.jsonl IO |
-| `src/providers/loop.js` | `.../providers/loop.js` | baseline loop (no fuse/commit) |
+Full dependency map: [`docs/UPSTREAM.md`](docs/UPSTREAM.md).
+
+## Exact copies
+
+| Fusion path | Upstream source | Notes |
+|-------------|-----------------|-------|
+| `src/population.js` | `dsh-evolve-loop/src/population.js` | `alive` / `merit` / population.jsonl IO |
+| `src/lib/population.js` | (re-export) | convenience alias |
+| `src/providers/loop.js` | `.../providers/loop.js` | baseline loop **without** fuse/commit |
 | `src/providers/select.js` | `.../providers/select.js` | fitness-proportional select |
 | `src/providers/mutate.js` | `.../providers/mutate.js` | default candidate-builder |
-| `src/providers/evaluate.js` | `.../providers/evaluate.js` | python-subprocess evaluate (needs DSH `subprocess` / optional `sandbox`) |
-| `src/providers/run_evaluator.py` | `.../providers/run_evaluator.py` | SkyDiscover-style evaluator runner |
+| `src/providers/evaluate.js` | `.../providers/evaluate.js` | needs DSH `subprocess` (+ optional sandbox) |
+| `src/providers/run_evaluator.py` | `.../providers/run_evaluator.py` | evaluator runner |
 | `src/providers/survive.js` | `.../providers/survive.js` | top-k survive |
 
-Fusion-only deltas:
+## Fusion deltas (same skeleton, documented DIFF)
 
-| Path | What changed |
-|------|----------------|
-| `src/providers/fuse-loop.js` | = `loop.js` + `fuse` after select + `commit` after append |
-| `src/providers/fuse-mutate.js` | = `mutate.js` path + append `K_t` to instruction |
-| `src/fuse/**` | evidence / gate / working / chain / commit |
+| Path | What changed vs upstream |
+|------|---------------------------|
+| `src/providers/fuse-loop.js` | = `loop.js` + **fuse** after select + **commit** after append |
+| `src/providers/fuse-mutate.js` | = `mutate.js` + append fused `K_t` to instruction |
 
-Runtime still depends on **DeepSeek Harness (DSH)** Cordis services and the `evolve` service object provided by `dsh-evolve-loop` (`allocate`, `spawnWorker`, `register`, `files`, …).
+## Fusion-only (not in upstream)
+
+`src/fuse/**` — evidence / gate / working / chain / commit / diff / paths.
+
+## DSH runtime dependency (not reimplemented)
+
+Cordis injects `evolve` from `dsh-evolve-loop`. Fusion calls:
+
+`register`, `context`, `population`, `copyTask`, `select`, `mutate`, `evaluate`,
+`survive`, `allocate`, `spawnWorker`, `currentRun`, …
+
+Peer packages: `@deepseek-ai/cordis`, `@deepseek-ai/dsh-tools`, `dsh-evolve-loop`.

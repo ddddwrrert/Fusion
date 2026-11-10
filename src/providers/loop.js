@@ -1,4 +1,8 @@
 ﻿/**
+ * VENDORED — exact copy of Organon `plugins/dsh-evolve-loop/src/providers/loop.js`.
+ * Fusion's active loop is `fuse-loop.js` (= this file + fuse/commit inserts).
+ * @see docs/UPSTREAM.md
+ *
  * Default search loop provider: coordinates baseline evaluation, iterative variation,
  * scoring, recording, and survival. Returns { best_id, best_fitness, remaining }.
  *

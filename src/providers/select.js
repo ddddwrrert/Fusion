@@ -1,4 +1,7 @@
 ﻿/**
+ * VENDORED — exact copy of Organon `plugins/dsh-evolve-loop/src/providers/select.js`.
+ * @see docs/UPSTREAM.md
+ *
  * Default parent selection provider: fitness-proportional roulette-wheel selection.
  *
  * @module dsh-evolve-loop/providers/select

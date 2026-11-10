@@ -11,7 +11,7 @@ import { select as baselineSelect } from '../baseline/select.js'
 import { survive as baselineSurvive } from '../baseline/survive.js'
 import { mutate as baselineMutate } from '../baseline/mutate.js'
 import { mutate as fusionMutate } from '../providers/fuse-mutate.js'
-import { merit } from '../baseline/population.js'
+import { merit } from '../population.js'
 
 /**
  * @param {object} options

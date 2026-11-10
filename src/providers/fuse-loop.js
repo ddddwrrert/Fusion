@@ -16,7 +16,7 @@
  * select / mutate / evaluate / survive / currentRun — from `dsh-evolve-loop`.
  */
 
-import { alive, merit } from '../lib/population.js'
+import { alive, merit } from '../population.js'
 import { fuse } from '../fuse/fuse.js'
 import { commit } from '../fuse/commit.js'
 

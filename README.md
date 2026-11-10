@@ -4,7 +4,10 @@
 
 `dsh-evolve-fusion` is a standalone Cordis companion plugin for **DeepSeek Harness (DSH)** + Organon [`dsh-evolve-loop`](https://github.com/). It **depends on DSH / `dsh-evolve-loop` at runtime** (`evolve` service) and does **not** modify upstream evolve-loop sources.
 
-**同源 / 依赖说明（必读）：** [`docs/UPSTREAM.md`](docs/UPSTREAM.md) — 哪些是直接调用 DSH evolve API，哪些是从 `loop.js` / `mutate.js` / `population.js` 写出的相同代码及 DIFF。
+**同源代码清单：** [`ORIGIN.md`](ORIGIN.md)  
+**依赖 / DIFF 明细：** [`docs/UPSTREAM.md`](docs/UPSTREAM.md)  
+
+与原框架相同且本仓用到的文件已整份写出（`population.js`、`providers/{loop,select,mutate,evaluate,survive}.js`、`run_evaluator.py`）；运行时仍依赖 DSH 的 `evolve` / `subprocess` 等服务。
 
 It registers:
 
@@ -68,16 +71,18 @@ npm run example:mock
 
 ```text
 src/
-  index.js / install.js          # Cordis opt-in
-  providers/fuse-loop.js         # new loop
-  providers/fuse-mutate.js       # K_t → worker
-  fuse/
-    evidence.js  gate.js  fuse.js
-    working.js   chain.js  commit.js
-    diff.js      paths.js
-tests/                           # vitest
-examples/mock-evolve-run.js
+  population.js                  # VENDORED = Organon population.js
+  index.js / install.js          # Cordis opt-in (depends on evolve)
+  providers/
+    loop.js select.js mutate.js  # VENDORED upstream defaults
+    evaluate.js survive.js run_evaluator.py
+    fuse-loop.js                 # = loop.js + fuse + commit
+    fuse-mutate.js               # = mutate.js + K_t
+  fuse/                          # Fusion-only
+tests/ examples/ tasks/demo/
+ORIGIN.md  docs/UPSTREAM.md
 ```
+
 
 ## Invariants
 

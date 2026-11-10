@@ -1,4 +1,7 @@
 ﻿/**
+ * VENDORED — exact copy of Organon `plugins/dsh-evolve-loop/src/providers/survive.js`.
+ * @see docs/UPSTREAM.md
+ *
  * Default population survival provider: keeps the top k alive candidates.
  *
  * @module dsh-evolve-loop/providers/survive

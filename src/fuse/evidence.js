@@ -9,7 +9,7 @@ import { unifiedDiff } from './diff.js'
 import { loadWorking } from './working.js'
 import { loadRecentChain } from './chain.js'
 import { resolveRunRoot } from './paths.js'
-import { alive, merit } from '../lib/population.js'
+import { alive, merit } from '../population.js'
 
 const SOLUTION_NAMES = [
   'solution.cpp', 'Main.cpp', 'main.cpp', 'sol.cpp',

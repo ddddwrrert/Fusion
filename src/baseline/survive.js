@@ -1,8 +1,8 @@
 /**
- * Baseline survive â€” keep top-k alive by merit (Organon-style culling).
+ * Baseline survive â€?keep top-k alive by merit (Organon-style culling).
  */
 
-import { alive, merit } from './population.js'
+import { alive, merit } from '../population.js'
 
 export const name = 'baseline-survive'
 

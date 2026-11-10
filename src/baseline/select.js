@@ -1,10 +1,10 @@
 /**
- * Baseline select — Organon default is “pick an alive parent”.
+ * Baseline select �?Organon default is “pick an alive parent�?
  * Minimal faithful standalone: choose the current best alive by merit.
  * (Organon may swap richer selectors; this is the portable default.)
  */
 
-import { alive, merit } from './population.js'
+import { alive, merit } from '../population.js'
 
 export const name = 'baseline-select'
 
