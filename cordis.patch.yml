@@ -1,0 +1,4 @@
+# Companion lift: registers after dsh-evolve-loop provides `evolve`.
+- insert:
+    - id: fusion-lift
+      name: dsh-evolve-fusion
